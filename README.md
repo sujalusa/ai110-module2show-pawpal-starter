@@ -52,3 +52,19 @@ The PawPal+ scheduler now includes advanced features for better pet care plannin
 - **Conflict detection**: Detects overlapping tasks between pets or within the same pet, providing warnings without crashing the program.
 
 These features make the scheduler more efficient and user-friendly for busy pet owners.
+## Testing PawPal+
+
+To run tests:
+
+```bash
+python -m pytest
+```
+
+Current tests cover:
+
+- Task completion and task list additions
+- Sorting tasks correctly by scheduled time
+- Recurring daily tasks generating the next occurrence upon completion
+- Conflict detection for overlapping task times
+
+**Confidence Level:** ⭐⭐⭐⭐⭐ (5/5) - all current tests pass successfully and the core scheduling behaviors are covered.
