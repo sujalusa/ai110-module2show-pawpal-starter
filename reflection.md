@@ -76,13 +76,17 @@ classDiagram
 
 **a. Initial design**
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+- `OwnerProfile` holds the owner's identity, contact info, daily time budget, and preference tags so every plan starts with a clear constraint envelope. It owns helper methods that update preferences and calculate how many minutes remain for pet care after other commitments.
+- `PetProfile` captures species, age, and care notes for each pet. It maintains a list of linked `CareTask` objects and syncs with the owner's context so the planner can describe why a task matters to that pet.
+- `CareTask` is the atomic unit of work (walks, feeding, meds, enrichment). It stores duration, priority, frequency, and an explanation stub so we can score and justify the task during scheduling.
+- `SchedulePlanner` is the coordinator that takes an owner, a pet, and a task queue plus planning rules. Its planned behaviors are to create a daily plan, explain why each task made the cut, and rebalance when the agenda exceeds the owner's available time.
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+- Prompt to Copilot: `#file:pawpal_system.py Can you review this skeleton and call out any missing relationships or potential logic bottlenecks?`
+- Feedback summary: Copilot warned that keeping `PetProfile.linked_tasks` as string IDs would force extra lookups and hide relationships when explaining decisions, and it noted that scheduling could still bottleneck if we end up rescoring the same task list multiple times per plan (a reminder for later optimization).
+- Change made now: I updated `PetProfile.linked_tasks` so it stores real `CareTask` objects and adjusted `add_task_reference` to take a `CareTask`. This keeps the UML relationship explicit in code and lets the planner walk the object graph without guessing from IDs.
+- Next follow-up: once I implement the scheduler, I plan to cache task scores inside `CareTask.score()` or in the planner to avoid the bottleneck Copilot highlighted.
 
 ---
 
@@ -96,7 +100,9 @@ classDiagram
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
+The scheduler checks for overlapping task durations rather than just exact time matches, providing more comprehensive conflict detection but at the cost of O(n^2) computational complexity for conflict checking.
 - Why is that tradeoff reasonable for this scenario?
+This tradeoff is reasonable because pet care schedules typically have a small number of tasks per day (e.g., <20), so the quadratic time complexity is acceptable for readability and correctness, prioritizing accurate conflict detection over micro-optimizations.
 
 ---
 
