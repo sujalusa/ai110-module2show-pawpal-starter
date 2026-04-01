@@ -42,6 +42,49 @@ pip install -r requirements.txt
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
 
+## Screenshots
+
+![PawPal Streamlit App](streamlit.png "PawPal+ App Interface")
+
+## Features
+
+PawPal+ implements intelligent scheduling algorithms to optimize pet care planning:
+
+### 1. **Chronological Task Sorting**
+- Algorithm: Parses task scheduled times (`HH:MM` format) and sorts in ascending order
+- Tasks without scheduled times are placed at day's end (23:59)
+- Enables clear visual ordering of the daily agenda
+
+### 2. **Priority-Based Task Prioritization**
+- Algorithm: Two-tier sort by negative priority (`-priority`) then duration
+- Higher priority tasks (`priority=3`) are scheduled before lower priority tasks (`priority=1`)
+- Within same priority, shorter tasks are preferred for better schedule flexibility
+- Greedy packing: fits as many high-priority tasks as possible within the owner's daily time budget
+
+### 3. **Overlapping Conflict Detection**
+- Algorithm: O(n²) interval-overlap check on sorted task list
+- Compares task time ranges: if `task_i.start < task_j.end` and `task_j.start < task_i.end`, conflict flagged
+- Returns conflicting task pairs with pet names and times for UI display
+- Prevents accidental double-booking of pet care activities
+
+### 4. **Recurring Task Generation**
+- Algorithm: Upon completion, daily/weekly tasks auto-spawn next occurrence
+- Daily tasks: create new instance 1 day ahead (using Python `timedelta`)
+- Weekly tasks: create new instance 7 days ahead
+- Task ID includes completion date stamp (e.g., `daily-feed_2026-03-31`) for traceability
+- Preserves frequency, priority, and description; resets completion status
+
+### 5. **Multi-Criteria Task Filtering**
+- Filter by pet name (case-insensitive)
+- Filter by completion status (completed/pending)
+- Filter by target date (due date range checking)
+- Supports combining filters for targeted task lists
+
+### 6. **Time Budget Enforcement**
+- Calculates total task duration and compares against owner's daily time budget
+- Excludes tasks that exceed remaining capacity
+- Returns feasible subset of tasks within time constraints
+
 ## Smarter Scheduling
 
 The PawPal+ scheduler now includes advanced features for better pet care planning:

@@ -145,13 +145,67 @@ if st.button("Generate schedule"):
         st.warning("Add at least one pet before generating a schedule.")
     else:
         scheduler = Scheduler(owner)
+
+        # Show due tasks sorted by time so users can inspect full pipeline
+        due_tasks = scheduler._all_tasks_with_pets(include_completed=False, target_date=plan_date)
+        sorted_due = scheduler.sort_by_time(due_tasks)
+
+        if not sorted_due:
+            st.info("No due tasks for the selected date. Add tasks or pick another day.")
+        else:
+            st.markdown(f"#### Due tasks for {plan_date.isoformat()} (sorted by time)")
+            st.table(
+                [
+                    {
+                        "Pet": pet.name,
+                        "Task": task.description,
+                        "Time": task.time or "(not set)",
+                        "Duration": f"{task.duration_minutes} min",
+                        "Priority": task.priority,
+                        "Frequency": task.frequency,
+                    }
+                    for pet, task in sorted_due
+                ]
+            )
+
+        # Detect and display conflicts clearly for an owner schedule decision.
+        conflicts = scheduler.detect_conflicts(plan_date)
+        if conflicts:
+            st.warning("Conflict detected: overlapping tasks were found. Resolve these before executing your plan.")
+            st.table(
+                [
+                    {
+                        "Pet 1": p1.name,
+                        "Task 1": t1.description,
+                        "Time 1": t1.time or "(unspecified)",
+                        "Pet 2": p2.name,
+                        "Task 2": t2.description,
+                        "Time 2": t2.time or "(unspecified)",
+                    }
+                    for p1, t1, p2, t2 in conflicts
+                ]
+            )
+        else:
+            st.success("No task conflicts detected for the selected day.")
+
+        # Build final plan within budget and show as ordered sequence
         plan = scheduler.build_daily_plan(plan_date)
         if not plan:
-            st.info("No tasks fit into today's schedule. Try adding tasks or increasing the time budget.")
+            st.info("No tasks fit into today's time budget. Try increasing available minutes or reducing task durations.")
         else:
             st.success(f"Built plan for {plan_date.isoformat()}")
-            for idx, (pet, task) in enumerate(plan, start=1):
-                st.write(
-                    f"{idx}. **{pet.name}** — {task.description} "
-                    f"({task.duration_minutes} min, priority {task.priority})"
-                )
+            st.table(
+                [
+                    {
+                        "Order": idx,
+                        "Pet": pet.name,
+                        "Task": task.description,
+                        "Time": task.time or "(not set)",
+                        "Duration": f"{task.duration_minutes} min",
+                        "Priority": task.priority,
+                    }
+                    for idx, (pet, task) in enumerate(plan, start=1)
+                ]
+            )
+
+            st.info("Use the above ordered plan as your working schedule. Mark tasks complete in backend to trigger recurrence logic.")
